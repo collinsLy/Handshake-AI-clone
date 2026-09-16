@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Handshake AI"
+description = "A faithful, interactive recreation of the Handshake AI contributor workspace with AI work, project browsing, filters, project details, and assessment completion flows."
+version = "1.0.0"
+id = "artifacts/handshake-ai"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25334
+
+[services.development]
+run = "pnpm --filter @workspace/handshake-ai run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/handshake-ai", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/handshake-ai/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25334"
+BASE_PATH = "/"

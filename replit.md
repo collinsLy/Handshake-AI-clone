@@ -1,6 +1,6 @@
-# [Project name]
+# Handshake AI
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+An interactive recreation of the Handshake AI contributor workspace, including assessment completion, AI work, and project browsing flows.
 
 ## Run & Operate
 
@@ -22,15 +22,21 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/handshake-ai/src/App.tsx` — route shell, local project data, and interactive page behavior
+- `artifacts/handshake-ai/src/index.css` — visual tokens and workspace styling
+- `.local/conversation-workspace/files/clone-data/` — captured reference HTML, data, and screenshots used during the clone
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- The clone is frontend-only because the reference experience is a local workspace prototype; interactions use local React state and URL navigation.
+- Shared navigation and header structure wrap all three reference routes so route changes preserve the workspace chrome.
+- Project browser filters and dashboard actions derive from one local project dataset so counts and detail dialogs stay consistent.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Assessment completion route with links into AI work and projects.
+- AI work dashboard with current/past project tabs, FAQ accordions, checklist actions, and referral actions.
+- Project browser with search, status filters, sorting, project details, and start/continue flows.
 
 ## User preferences
 
