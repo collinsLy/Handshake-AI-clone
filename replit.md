@@ -24,6 +24,7 @@ An interactive recreation of the Handshake AI contributor workspace, including a
 
 - `artifacts/handshake-ai/src/App.tsx` — route shell, local project data, and interactive page behavior
 - `artifacts/handshake-ai/src/index.css` — visual tokens and workspace styling
+- `artifacts/handshake-ai/public/handshake-logo.png` — uploaded Handshake brand mark used throughout the shell
 - `.local/conversation-workspace/files/clone-data/` — captured reference HTML, data, and screenshots used during the clone
 
 ## Architecture decisions
@@ -37,6 +38,8 @@ An interactive recreation of the Handshake AI contributor workspace, including a
 - Assessment completion route with links into AI work and projects.
 - AI work dashboard with current/past project tabs, FAQ accordions, checklist actions, and referral actions.
 - Project browser with search, status filters, sorting, project details, and start/continue flows.
+- Routed workspace views for Jobs, Explore, Inbox, Feed, AI showcase, Events, Employers, Payments, Referrals, Support, and Account settings.
+- A stateful task workspace that persists started projects and walks contributors through three task steps.
 
 ## User preferences
 
