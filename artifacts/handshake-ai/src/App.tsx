@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
@@ -6,22 +6,36 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import {
   ArrowLeft,
   ArrowRight,
+  Bell,
   BriefcaseBusiness,
+  BookOpen,
   Building2,
   CalendarDays,
   Check,
+  CheckCircle2,
   ChevronDown,
   CircleHelp,
   Compass,
   DollarSign,
+  ExternalLink,
+  FileText,
   FolderOpen,
+  GraduationCap,
+  Heart,
   Inbox,
   ListFilter,
+  LifeBuoy,
+  LogOut,
+  Mail,
+  Plus,
   MapPin,
   MessageSquare,
   Rss,
+  Save,
   Search,
+  Settings,
   Sparkles,
+  Trash2,
   UserRound,
   X,
   type LucideIcon,
@@ -122,6 +136,11 @@ function Sidebar() {
 function Header({ profileOpen, setProfileOpen }: { profileOpen: boolean; setProfileOpen: (value: boolean) => void }) {
   const [location, setLocation] = useLocation();
   const [supportOpen, setSupportOpen] = useState(false);
+  const handleLogout = () => {
+    window.localStorage.clear();
+    setProfileOpen(false);
+    setLocation('/');
+  };
   return (
     <header className="workspace-header relative flex items-center justify-between bg-white px-4 md:px-5">
       <div className="top-tabs flex h-full items-center">
@@ -150,18 +169,18 @@ function Header({ profileOpen, setProfileOpen }: { profileOpen: boolean; setProf
           <Popover className="profile-menu right-2 top-8 w-56">
             <p className="mb-2 text-[11px] font-semibold">Profile</p>
             {[
-              ['My jobs', '/jobs'],
-              ['Documents', '/account'],
-              ['Career interests', '/account'],
-              ['Notification preferences', '/account'],
-              ['School connections', '/account'],
-              ['Settings', '/account'],
+              ['My jobs', '/my-jobs'],
+              ['Documents', '/documents'],
+              ['Career interests', '/career-interests'],
+              ['Notification preferences', '/notification-preferences'],
+              ['School connections', '/school-connections'],
+              ['Settings', '/settings'],
               ['Support', '/support'],
             ].map(([label, path]) => <button key={label} onClick={() => { setProfileOpen(false); setLocation(path); }} className="profile-menu-item">{label}</button>)}
             <div className="my-2 border-t border-[#eee]" />
-            <button onClick={() => { setProfileOpen(false); setLocation('/support'); }} className="profile-menu-item">Help center</button>
-            <button onClick={() => { setProfileOpen(false); setLocation('/support'); }} className="profile-menu-item">Terms of Service</button>
-            <button onClick={() => { setProfileOpen(false); setLocation('/'); }} className="profile-menu-item">Log out</button>
+            <button onClick={() => { setProfileOpen(false); setLocation('/help-center'); }} className="profile-menu-item">Help center</button>
+            <button onClick={() => { setProfileOpen(false); setLocation('/terms'); }} className="profile-menu-item">Terms of Service</button>
+            <button onClick={handleLogout} className="profile-menu-item">Log out</button>
           </Popover>
         )}
       </div>
@@ -398,6 +417,136 @@ function ContentPage({ pageKey }: { pageKey: string }) {
   return <Workspace><main className="workspace-content flex-1"><div className="mb-6 flex items-start gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#b8ef45]"><Icon size={18} /></div><div><h1 className="text-[17px] font-bold tracking-[-.03em]">{page.title}</h1><p className="mt-0.5 text-[11px] text-[#888]">{page.subtitle}</p></div></div><div className="mb-5 flex max-w-[680px] items-center gap-2"><div className="relative flex-1"><Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#999]" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Search ${page.title.toLowerCase()}...`} className="h-8 w-full rounded-lg border border-[#e2e2e2] pl-8 pr-3 text-[11px] outline-none focus:border-black" /></div><button onClick={() => setNotice('Your preferences are up to date')} className="tiny-btn h-8">Refresh</button></div><div className="content-page-grid">{items.map((item) => <article key={item.title} className="content-card"><div><p className="text-[13px] font-semibold">{item.title}</p><p className="mt-2 text-[12px] leading-relaxed text-[#666]">{item.detail}</p><p className="mt-3 text-[10px] text-[#999]">{item.meta}</p></div><button onClick={() => act(item)} className={saved.includes(item.title) ? 'tiny-btn' : 'solid-btn'}>{saved.includes(item.title) ? 'Saved' : item.action}</button></article>)}</div>{!items.length && <div className="rounded-lg border border-dashed border-[#ddd] py-20 text-center text-xs text-[#888]">Nothing found. Try another search.</div>}{notice && <div className="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-md bg-[#111] px-3 py-2 text-xs text-white">{notice}</div>}{selected && <Modal title={selected.title} onClose={() => setSelected(null)}><p className="mt-4 text-sm leading-relaxed text-[#555]">{selected.detail}</p><p className="mt-3 text-xs text-[#888]">{selected.meta}</p><button onClick={() => setSelected(null)} className="solid-btn mt-5 w-full">Done</button></Modal>}</main></Workspace>;
 }
 
+type ProfileSection = 'my-jobs' | 'documents' | 'career-interests' | 'notification-preferences' | 'school-connections' | 'settings' | 'support' | 'help-center' | 'terms';
+
+function ProfileShell({ title, subtitle, icon: Icon, children }: { title: string; subtitle: string; icon: LucideIcon; children: ReactNode }) {
+  return <Workspace><main className="workspace-content flex-1"><div className="mb-6 flex items-start gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#b8ef45]"><Icon size={18} /></div><div><h1 className="text-[17px] font-bold tracking-[-.03em]">{title}</h1><p className="mt-0.5 text-[11px] text-[#888]">{subtitle}</p></div></div>{children}</main></Workspace>;
+}
+
+function Notice({ message }: { message: string }) {
+  return message ? <div className="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-md bg-[#111] px-3 py-2 text-xs text-white">{message}</div> : null;
+}
+
+function MyJobsPage() {
+  const [, setLocation] = useLocation();
+  const [tab, setTab] = useState<'active' | 'past'>('active');
+  const started = storedIds('handshake-started-projects');
+  return <ProfileShell title="My jobs" subtitle="Track the projects you have started and completed." icon={BriefcaseBusiness}>
+    <div className="mb-4 flex gap-1 border-b border-[#e5e5e5]"><button onClick={() => setTab('active')} className={`border-b-2 px-3 py-2 text-[11px] ${tab === 'active' ? 'border-black font-semibold' : 'border-transparent text-[#777]'}`}>Active</button><button onClick={() => setTab('past')} className={`border-b-2 px-3 py-2 text-[11px] ${tab === 'past' ? 'border-black font-semibold' : 'border-transparent text-[#777]'}`}>Past</button></div>
+    {tab === 'active' ? <article className="max-w-[720px] rounded-lg border border-[#e5e5e5] p-4"><div className="flex items-start justify-between gap-4"><div><h2 className="text-[13px] font-semibold">Project Hedgehog</h2><p className="mt-1 text-[11px] text-[#888]">$17/hr · Remote · AI Evaluation</p></div><span className="status available">{started.includes('hedgehog') ? 'In progress' : 'Available'}</span></div><p className="mt-4 max-w-[600px] text-[12px] leading-relaxed text-[#555]">Help improve AI accuracy across audio, visual, and text tasks by evaluating model outputs and providing structured feedback.</p><div className="mt-4 flex gap-2"><button onClick={() => window.location.assign(HEDGEHOG_SIGN_IN_URL)} className="solid-btn">{started.includes('hedgehog') ? 'Continue task' : 'Start task'}</button><button onClick={() => setLocation('/projects?open=hedgehog')} className="tiny-btn">View project</button></div></article> : <div className="max-w-[720px] rounded-lg border border-dashed border-[#ddd] py-16 text-center text-xs text-[#777]">No past jobs yet.</div>}
+  </ProfileShell>;
+}
+
+type SavedDocument = { id: string; name: string; size: string; added: string };
+
+function DocumentsPage() {
+  const [documents, setDocuments] = useState<SavedDocument[]>(() => {
+    try { return JSON.parse(window.localStorage.getItem('handshake-documents') ?? '[]'); } catch { return []; }
+  });
+  const [notice, setNotice] = useState('');
+  const saveDocuments = (next: SavedDocument[]) => { setDocuments(next); window.localStorage.setItem('handshake-documents', JSON.stringify(next)); };
+  const addDocument = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const next = [{ id: `${file.name}-${file.lastModified}`, name: file.name, size: `${Math.max(1, Math.round(file.size / 1024))} KB`, added: new Date().toLocaleDateString() }, ...documents];
+    saveDocuments(next);
+    setNotice(`${file.name} added to your documents`);
+    event.target.value = '';
+  };
+  const removeDocument = (id: string) => { saveDocuments(documents.filter((document) => document.id !== id)); setNotice('Document removed'); };
+  return <ProfileShell title="Documents" subtitle="Keep contributor, tax, and verification documents in one place." icon={FileText}>
+    <div className="max-w-[720px] rounded-lg border border-[#e5e5e5] p-4"><div className="flex items-center justify-between gap-3"><div><h2 className="text-[13px] font-semibold">Your documents</h2><p className="mt-1 text-[11px] text-[#888]">Files are stored locally in this workspace.</p></div><label className="solid-btn cursor-pointer"><Plus size={12} className="mr-1 inline" /> Add document<input type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" onChange={addDocument} className="hidden" /></label></div><div className="mt-4 divide-y divide-[#eee]">{documents.map((document) => <div key={document.id} className="flex items-center justify-between gap-3 py-3"><div className="flex min-w-0 items-center gap-2"><FileText size={15} className="shrink-0 text-[#777]" /><span className="truncate text-[11px]">{document.name}</span><span className="shrink-0 text-[10px] text-[#999]">{document.size}</span></div><button onClick={() => removeDocument(document.id)} className="rounded p-1.5 text-[#888] hover:bg-[#f4f4f4] hover:text-black" aria-label={`Remove ${document.name}`}><Trash2 size={13} /></button></div>)}{!documents.length && <div className="rounded-md border border-dashed border-[#ddd] py-12 text-center text-xs text-[#777]">No documents added yet.</div>}</div></div><Notice message={notice} />
+  </ProfileShell>;
+}
+
+const interestOptions = ['AI evaluation', 'Audio review', 'Visual review', 'Writing and editing', 'Research and fact checking'];
+
+function CareerInterestsPage() {
+  const [selected, setSelected] = useState<string[]>(() => storedIds('handshake-career-interests'));
+  const [hours, setHours] = useState(() => window.localStorage.getItem('handshake-career-hours') ?? '5–10 hours');
+  const [notice, setNotice] = useState('');
+  const toggle = (interest: string) => setSelected((current) => current.includes(interest) ? current.filter((item) => item !== interest) : [...current, interest]);
+  const save = () => { window.localStorage.setItem('handshake-career-interests', JSON.stringify(selected)); window.localStorage.setItem('handshake-career-hours', hours); setNotice('Career interests saved'); };
+  return <ProfileShell title="Career interests" subtitle="Tell us what kinds of AI work you would like to see." icon={Heart}>
+    <div className="max-w-[720px] space-y-4"><section className="rounded-lg border border-[#e5e5e5] p-4"><h2 className="text-[13px] font-semibold">Work interests</h2><p className="mt-1 text-[11px] text-[#888]">Select all that apply.</p><div className="mt-4 grid gap-2 sm:grid-cols-2">{interestOptions.map((interest) => <label key={interest} className="flex cursor-pointer items-center gap-2 rounded-md border border-[#eee] p-3 text-[11px] hover:bg-[#fafafa]"><input type="checkbox" checked={selected.includes(interest)} onChange={() => toggle(interest)} />{interest}</label>)}</div></section><section className="rounded-lg border border-[#e5e5e5] p-4"><label className="text-[13px] font-semibold" htmlFor="hours-select">How much time can you contribute?</label><select id="hours-select" value={hours} onChange={(event) => setHours(event.target.value)} className="mt-3 block h-8 rounded-md border border-[#ddd] bg-white px-2 text-[11px]"><option>Less than 5 hours</option><option>5–10 hours</option><option>10–20 hours</option><option>20+ hours</option></select></section><button onClick={save} className="solid-btn"><Save size={12} className="mr-1 inline" /> Save interests</button></div><Notice message={notice} />
+  </ProfileShell>;
+}
+
+function NotificationPreferencesPage() {
+  const [preferences, setPreferences] = useState<Record<string, boolean>>(() => {
+    try { return JSON.parse(window.localStorage.getItem('handshake-notifications') ?? '{"projects":true,"messages":true,"payments":true,"marketing":false}'); } catch { return { projects: true, messages: true, payments: true, marketing: false }; }
+  });
+  const [digest, setDigest] = useState(() => window.localStorage.getItem('handshake-digest') ?? 'Instantly');
+  const [notice, setNotice] = useState('');
+  const save = () => { window.localStorage.setItem('handshake-notifications', JSON.stringify(preferences)); window.localStorage.setItem('handshake-digest', digest); setNotice('Notification preferences saved'); };
+  const labels: Record<string, string> = { projects: 'New project opportunities', messages: 'Messages and project updates', payments: 'Payment and payout updates', marketing: 'Tips, events, and Handshake news' };
+  return <ProfileShell title="Notification preferences" subtitle="Choose which updates you want to receive." icon={Bell}>
+    <div className="max-w-[720px] rounded-lg border border-[#e5e5e5] p-4"><div className="divide-y divide-[#eee]">{Object.keys(labels).map((key) => <label key={key} className="flex cursor-pointer items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"><span className="text-[12px]">{labels[key]}</span><input type="checkbox" checked={Boolean(preferences[key])} onChange={() => setPreferences((current: Record<string, boolean>) => ({ ...current, [key]: !current[key] }))} /></label>)}</div><div className="mt-5 border-t border-[#eee] pt-4"><label htmlFor="digest-select" className="text-[12px] font-semibold">Email frequency</label><select id="digest-select" value={digest} onChange={(event) => setDigest(event.target.value)} className="mt-2 block h-8 rounded-md border border-[#ddd] bg-white px-2 text-[11px]"><option>Instantly</option><option>Daily digest</option><option>Weekly digest</option></select></div><button onClick={save} className="solid-btn mt-5"><Save size={12} className="mr-1 inline" /> Save preferences</button></div><Notice message={notice} />
+  </ProfileShell>;
+}
+
+function SchoolConnectionsPage() {
+  const [schools, setSchools] = useState<string[]>(() => { try { return JSON.parse(window.localStorage.getItem('handshake-schools') ?? '[]'); } catch { return []; } });
+  const [school, setSchool] = useState('');
+  const [notice, setNotice] = useState('');
+  const addSchool = () => { const value = school.trim(); if (!value || schools.includes(value)) return; const next = [...schools, value]; setSchools(next); window.localStorage.setItem('handshake-schools', JSON.stringify(next)); setSchool(''); setNotice('School connection added'); };
+  const removeSchool = (value: string) => { const next = schools.filter((item) => item !== value); setSchools(next); window.localStorage.setItem('handshake-schools', JSON.stringify(next)); setNotice('School connection removed'); };
+  return <ProfileShell title="School connections" subtitle="Connect your school to discover relevant opportunities and events." icon={GraduationCap}>
+    <div className="max-w-[720px] rounded-lg border border-[#e5e5e5] p-4"><h2 className="text-[13px] font-semibold">Connected schools</h2><p className="mt-1 text-[11px] text-[#888]">You can add or remove a connection at any time.</p><div className="mt-4 flex gap-2"><input value={school} onChange={(event) => setSchool(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && addSchool()} placeholder="Enter school or university name" className="h-8 min-w-0 flex-1 rounded-md border border-[#ddd] px-3 text-[11px] outline-none focus:border-black" /><button onClick={addSchool} className="solid-btn"><Plus size={12} className="mr-1 inline" /> Add</button></div><div className="mt-4 divide-y divide-[#eee]">{schools.map((value) => <div key={value} className="flex items-center justify-between py-3 text-[11px]"><span className="flex items-center gap-2"><CheckCircle2 size={14} className="text-[#63a36f]" />{value}</span><button onClick={() => removeSchool(value)} className="text-[#777] underline underline-offset-2 hover:text-black">Remove</button></div>)}{!schools.length && <div className="rounded-md border border-dashed border-[#ddd] py-10 text-center text-xs text-[#777]">No school connections yet.</div>}</div></div><Notice message={notice} />
+  </ProfileShell>;
+}
+
+function SettingsPage() {
+  const [settings, setSettings] = useState(() => { try { return JSON.parse(window.localStorage.getItem('handshake-settings') ?? '{"name":"Contributor","email":"contributor@example.com","timezone":"Africa/Nairobi","privateProfile":false}'); } catch { return { name: 'Contributor', email: 'contributor@example.com', timezone: 'Africa/Nairobi', privateProfile: false }; } });
+  const [notice, setNotice] = useState('');
+  const [securityOpen, setSecurityOpen] = useState(false);
+  const update = (key: string, value: string | boolean) => setSettings((current: Record<string, string | boolean>) => ({ ...current, [key]: value }));
+  const save = () => { window.localStorage.setItem('handshake-settings', JSON.stringify(settings)); setNotice('Settings saved'); };
+  const exportData = () => { const data = { settings, interests: storedIds('handshake-career-interests'), notifications: window.localStorage.getItem('handshake-notifications'), documents: window.localStorage.getItem('handshake-documents') }; const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = 'handshake-ai-profile.json'; link.click(); URL.revokeObjectURL(url); setNotice('Profile data exported'); };
+  return <ProfileShell title="Settings" subtitle="Manage your contributor account and privacy choices." icon={Settings}>
+    <div className="max-w-[720px] space-y-4"><section className="rounded-lg border border-[#e5e5e5] p-4"><h2 className="text-[13px] font-semibold">Profile details</h2><div className="mt-4 grid gap-3 sm:grid-cols-2"><label className="text-[11px]">Display name<input value={String(settings.name)} onChange={(event) => update('name', event.target.value)} className="mt-1 h-8 w-full rounded-md border border-[#ddd] px-3 text-[11px] outline-none focus:border-black" /></label><label className="text-[11px]">Email address<input type="email" value={String(settings.email)} onChange={(event) => update('email', event.target.value)} className="mt-1 h-8 w-full rounded-md border border-[#ddd] px-3 text-[11px] outline-none focus:border-black" /></label><label className="text-[11px]">Timezone<select value={String(settings.timezone)} onChange={(event) => update('timezone', event.target.value)} className="mt-1 h-8 w-full rounded-md border border-[#ddd] bg-white px-2 text-[11px]"><option>Africa/Nairobi</option><option>America/New_York</option><option>Europe/London</option><option>Asia/Singapore</option></select></label></div></section><section className="rounded-lg border border-[#e5e5e5] p-4"><h2 className="text-[13px] font-semibold">Privacy and security</h2><label className="mt-4 flex items-center justify-between gap-4 text-[11px]"><span><strong className="block font-medium">Private profile</strong><small className="text-[#888]">Hide your profile from community discovery.</small></span><input type="checkbox" checked={Boolean(settings.privateProfile)} onChange={(event) => update('privateProfile', event.target.checked)} /></label><button onClick={() => setSecurityOpen(true)} className="tiny-btn mt-4">Manage sign-in security</button></section><div className="flex flex-wrap gap-2"><button onClick={save} className="solid-btn"><Save size={12} className="mr-1 inline" /> Save settings</button><button onClick={exportData} className="tiny-btn">Export my data</button></div></div><Notice message={notice} />{securityOpen && <Modal title="Sign-in security" onClose={() => setSecurityOpen(false)}><p className="mt-4 text-sm leading-relaxed text-[#555]">Your sign-in is managed by the Handshake AI account provider. Use the provider sign-in page to update your password or recovery options.</p><a href={HEDGEHOG_SIGN_IN_URL} target="_blank" rel="noreferrer" className="solid-btn mt-5 block text-center">Open sign-in page <ExternalLink size={12} className="ml-1 inline" /></a></Modal>}
+  </ProfileShell>;
+}
+
+const helpArticles = [
+  { title: 'How do I start a project?', detail: 'Open Projects, choose Project Hedgehog, and select Start task. You will be taken to the Multimango sign-in page before entering the task workspace.' },
+  { title: 'How and when do I get paid?', detail: 'Approved earnings appear in Payments. Your current balance and payout history remain visible there, and payout setup is available from the Payout method row.' },
+  { title: 'How do I update my profile?', detail: 'Use Settings for your account details, Career interests for work preferences, and Notification preferences for updates.' },
+  { title: 'Where can I upload documents?', detail: 'Open Documents from the profile menu and use Add document. Files are stored locally in this prototype.' },
+];
+
+function SupportPage({ helpOnly = false }: { helpOnly?: boolean }) {
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState<string | null>(null);
+  const [message, setMessage] = useState('');
+  const [sent, setSent] = useState(false);
+  const articles = helpArticles.filter((article) => `${article.title} ${article.detail}`.toLowerCase().includes(query.toLowerCase()));
+  const submit = (event: FormEvent) => { event.preventDefault(); if (!message.trim()) return; setSent(true); setMessage(''); };
+  return <ProfileShell title={helpOnly ? 'Help center' : 'Support'} subtitle={helpOnly ? 'Find quick answers about your Handshake AI workspace.' : 'Get help with projects, payments, and your contributor account.'} icon={helpOnly ? BookOpen : LifeBuoy}>
+    <div className="max-w-[860px]"><div className="relative max-w-[680px]"><Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#999]" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search help articles..." className="h-8 w-full rounded-lg border border-[#ddd] pl-8 pr-3 text-[11px] outline-none focus:border-black" /></div><div className="mt-4 grid gap-4 lg:grid-cols-[1fr_320px]"><section className="rounded-lg border border-[#e5e5e5]">{articles.map((article) => <div key={article.title} className="border-b border-[#eee] last:border-0"><button onClick={() => setOpen(open === article.title ? null : article.title)} className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left text-[12px] font-medium"><span>{article.title}</span><ChevronDown size={13} className={`shrink-0 transition-transform ${open === article.title ? 'rotate-180' : ''}`} /></button>{open === article.title && <p className="px-4 pb-4 text-[11px] leading-relaxed text-[#666]">{article.detail}</p>}</div>)}{!articles.length && <p className="p-6 text-center text-xs text-[#777]">No help articles match that search.</p>}</section><aside className="rounded-lg border border-[#e5e5e5] p-4"><h2 className="text-[13px] font-semibold">{helpOnly ? 'Still need help?' : 'Contact support'}</h2><p className="mt-1 text-[11px] leading-relaxed text-[#777]">Send a message and the support team will follow up with you.</p>{sent ? <div className="mt-4 rounded-md bg-[#edfad6] p-3 text-[11px] text-[#4c8010]">Your message was sent. We will get back to you soon.</div> : <form onSubmit={submit} className="mt-4"><textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Describe what you need help with..." className="min-h-[100px] w-full resize-y rounded-md border border-[#ddd] p-3 text-[11px] outline-none focus:border-black" required /><button type="submit" className="solid-btn mt-3 w-full"><Mail size={12} className="mr-1 inline" /> Send message</button></form>}</aside></div></div>
+  </ProfileShell>;
+}
+
+function TermsPage() {
+  const [accepted, setAccepted] = useState(() => window.localStorage.getItem('handshake-terms-accepted') === 'true');
+  const accept = () => { setAccepted(true); window.localStorage.setItem('handshake-terms-accepted', 'true'); };
+  return <ProfileShell title="Terms of Service" subtitle="Review the terms that apply to your Handshake AI workspace." icon={BookOpen}>
+    <div className="max-w-[760px] rounded-lg border border-[#e5e5e5] p-5"><p className="text-[10px] text-[#888]">Last updated September 17, 2026</p><div className="mt-5 space-y-5 text-[12px] leading-relaxed text-[#555]"><section><h2 className="font-semibold text-[#111]">Using Handshake AI</h2><p className="mt-1">You agree to use the workspace honestly, follow project instructions, and submit work that reflects your own effort.</p></section><section><h2 className="font-semibold text-[#111]">Projects and payments</h2><p className="mt-1">Project availability, approval, and payment eligibility can vary by project and region. Payments are shown in the Payments section after approved work is recorded.</p></section><section><h2 className="font-semibold text-[#111]">Account responsibility</h2><p className="mt-1">Keep your account information current and contact Support if you notice unauthorized activity or an issue with your contributor profile.</p></section></div><div className="mt-6 border-t border-[#eee] pt-4"><label className="flex items-start gap-2 text-[11px]"><input type="checkbox" checked={accepted} onChange={(event) => { setAccepted(event.target.checked); window.localStorage.setItem('handshake-terms-accepted', String(event.target.checked)); }} /><span>I have read and agree to the Terms of Service.</span></label><button onClick={accept} disabled={accepted} className="solid-btn mt-4 disabled:cursor-default disabled:opacity-50">{accepted ? 'Accepted' : 'Accept terms'}</button></div></div>
+  </ProfileShell>;
+}
+
+function ProfilePage({ section }: { section: ProfileSection }) {
+  if (section === 'my-jobs') return <MyJobsPage />;
+  if (section === 'documents') return <DocumentsPage />;
+  if (section === 'career-interests') return <CareerInterestsPage />;
+  if (section === 'notification-preferences') return <NotificationPreferencesPage />;
+  if (section === 'school-connections') return <SchoolConnectionsPage />;
+  if (section === 'settings') return <SettingsPage />;
+  if (section === 'support') return <SupportPage />;
+  if (section === 'help-center') return <SupportPage helpOnly />;
+  return <TermsPage />;
+}
+
 function TaskPage() {
   const [, setLocation] = useLocation();
   const id = window.location.pathname.split('/').pop() ?? '';
@@ -409,7 +558,7 @@ function TaskPage() {
 }
 
 function Router() {
-  return <ErrorBoundary resetKey={window.location.pathname}><Switch><Route path="/" component={Assessment} /><Route path="/ai-work-dashboard" component={Dashboard} /><Route path="/projects" component={ProjectBrowser} /><Route path="/payments" component={PaymentsPage} /><Route path="/tasks/:id" component={TaskPage} />{Object.keys(pageContent).filter((pageKey) => pageKey !== 'payments').map((pageKey) => <Route key={pageKey} path={`/${pageKey}`} component={() => <ContentPage pageKey={pageKey} />} />)}<Route component={() => <ContentPage pageKey="explore" />} /></Switch></ErrorBoundary>;
+  return <ErrorBoundary resetKey={window.location.pathname}><Switch><Route path="/" component={Assessment} /><Route path="/ai-work-dashboard" component={Dashboard} /><Route path="/projects" component={ProjectBrowser} /><Route path="/payments" component={PaymentsPage} /><Route path="/tasks/:id" component={TaskPage} /><Route path="/my-jobs" component={() => <ProfilePage section="my-jobs" />} /><Route path="/documents" component={() => <ProfilePage section="documents" />} /><Route path="/career-interests" component={() => <ProfilePage section="career-interests" />} /><Route path="/notification-preferences" component={() => <ProfilePage section="notification-preferences" />} /><Route path="/school-connections" component={() => <ProfilePage section="school-connections" />} /><Route path="/settings" component={() => <ProfilePage section="settings" />} /><Route path="/account" component={() => <ProfilePage section="settings" />} /><Route path="/support" component={() => <ProfilePage section="support" />} /><Route path="/help-center" component={() => <ProfilePage section="help-center" />} /><Route path="/terms" component={() => <ProfilePage section="terms" />} />{Object.keys(pageContent).filter((pageKey) => pageKey !== 'payments' && pageKey !== 'account').map((pageKey) => <Route key={pageKey} path={`/${pageKey}`} component={() => <ContentPage pageKey={pageKey} />} />)}<Route component={() => <ContentPage pageKey="explore" />} /></Switch></ErrorBoundary>;
 }
 
 function App() {
