@@ -29,6 +29,8 @@ import {
 import { Route, Switch, Link, Router as WouterRouter, useLocation } from 'wouter';
 
 const queryClient = new QueryClient();
+const HEDGEHOG_SIGN_IN_URL = 'https://www.multimango.com/sign-in';
+const HEDGEHOG_TASK_URL = 'https://label-exhed4afhtahh0b7.eastus2-01.azurewebsites.net/?projectId=sr_metareranker_toloka_regular_v4&source=toloka&workerId=73e7755de4fff2b35dff414e58ef74fe&hitId=reindeer.01a0a634-381e-70af-8ebe-d957672ae452';
 
 type ProjectStatus = 'Available' | 'In Progress' | 'Completed';
 type Project = {
@@ -44,14 +46,7 @@ type Project = {
 };
 
 const projects: Project[] = [
-  { id: 'gaffer', name: 'Project Gaffer', category: 'Content Review', status: 'Available', description: 'Fellows must review videos and edit captions. Ensure accuracy, timing, and accessibility compliance across a variety of content types.', tags: ['Video Review', 'Captioning', 'Accessibility'], pay: '$30/hr', age: '1 day ago' },
-  { id: 'orion', name: 'Project Orion', category: 'Code Review', status: 'Available', description: 'Evaluate and rank AI-generated code snippets for correctness, efficiency, and style. Software engineering background preferred.', tags: ['Python', 'Code Review', 'Software Engineering'], pay: '$35/hr', age: '1 day ago' },
   { id: 'hedgehog', name: 'Project Hedgehog', category: 'AI Evaluation', status: 'Available', description: 'Help improve AI accuracy across audio, visual, and text tasks. Evaluate model outputs and provide structured feedback to enhance performance.', tags: ['Audio', 'Visual', 'Text Analysis'], pay: '$17/hr', age: '2 days ago' },
-  { id: 'nova', name: 'Project Nova', category: 'Data Annotation', status: 'Available', description: 'Annotate and label datasets for computer vision model training. Precision and attention to detail are essential for this role.', tags: ['Image Labeling', 'Computer Vision', 'Annotation'], pay: '$25/hr', age: '3 days ago' },
-  { id: 'seal', name: 'Project Seal', category: 'AI Red Teaming', status: 'In Progress', description: 'Craft difficult prompts to expose failures in model websearch and reasoning. Requires strong analytical thinking and creativity.', tags: ['Prompt Engineering', 'Reasoning', 'Research'], pay: '$140/task', age: '5 days ago', progress: '2 steps left' },
-  { id: 'titan', name: 'Project Titan', category: 'Content Creation', status: 'In Progress', description: 'Write and evaluate creative content for generative AI systems. Strong writing skills and creative thinking are a must.', tags: ['Creative Writing', 'Content Evaluation', 'Storytelling'], pay: '$28/hr', age: '7 days ago', progress: '1 steps left' },
-  { id: 'falcon', name: 'Project Falcon', category: 'Data Annotation', status: 'Completed', description: 'Annotate images for object detection model training. Work with diverse datasets across multiple domains and industries.', tags: ['Image Labeling', 'Object Detection'], pay: '$22/hr', age: '30 days ago' },
-  { id: 'atlas', name: 'Project Atlas', category: 'Transcription', status: 'Completed', description: 'Transcribe and verify audio clips for speech recognition model improvement. Native or near-native language proficiency required.', tags: ['Transcription', 'Audio', 'Language'], pay: '$18/hr', age: '45 days ago' },
 ];
 
 const navPrimary: { label: string; path: string; icon: LucideIcon }[] = [
@@ -140,9 +135,7 @@ function Header({ profileOpen, setProfileOpen }: { profileOpen: boolean; setProf
         <button onClick={() => setSupportOpen((open) => !open)} className="flex items-center gap-1 text-[11px] text-[#666] hover:text-black" data-testid="button-support">
           <CircleHelp size={12} /> Support
         </button>
-        <button onClick={() => setProfileOpen(!profileOpen)} className="flex h-5 w-5 items-center justify-center overflow-hidden rounded-full bg-[#111] text-[9px] font-bold text-white" data-testid="button-profile">
-          <img src="/handshake-logo.png" alt="" className="h-full w-full object-cover" />
-        </button>
+        <button onClick={() => setProfileOpen(!profileOpen)} className="profile-avatar flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white" data-testid="button-profile">M</button>
         {supportOpen && (
           <Popover className="right-12 top-8 w-56">
             <p className="font-semibold">How can we help?</p>
@@ -154,10 +147,21 @@ function Header({ profileOpen, setProfileOpen }: { profileOpen: boolean; setProf
           </Popover>
         )}
         {profileOpen && (
-          <Popover className="right-2 top-8 w-44">
-            <p className="font-semibold">AI contributor</p>
-            <p className="mt-1 text-xs text-[#777]">Manage your profile and workspace preferences.</p>
-            <button onClick={() => { setProfileOpen(false); setLocation('/account'); }} className="tiny-btn mt-3 w-full py-1.5 text-[11px]">Account settings</button>
+          <Popover className="profile-menu right-2 top-8 w-56">
+            <p className="mb-2 text-[11px] font-semibold">Profile</p>
+            {[
+              ['My jobs', '/jobs'],
+              ['Documents', '/account'],
+              ['Career interests', '/account'],
+              ['Notification preferences', '/account'],
+              ['School connections', '/account'],
+              ['Settings', '/account'],
+              ['Support', '/support'],
+            ].map(([label, path]) => <button key={label} onClick={() => { setProfileOpen(false); setLocation(path); }} className="profile-menu-item">{label}</button>)}
+            <div className="my-2 border-t border-[#eee]" />
+            <button onClick={() => { setProfileOpen(false); setLocation('/support'); }} className="profile-menu-item">Help center</button>
+            <button onClick={() => { setProfileOpen(false); setLocation('/support'); }} className="profile-menu-item">Terms of Service</button>
+            <button onClick={() => { setProfileOpen(false); setLocation('/'); }} className="profile-menu-item">Log out</button>
           </Popover>
         )}
       </div>
@@ -227,7 +231,11 @@ function projectWithStoredStatus(project: Project, started: string[]) {
   return started.includes(project.id) && project.status === 'Available' ? { ...project, status: 'In Progress' as ProjectStatus, progress: '3 steps left' } : project;
 }
 
-function ProjectMiniCard({ project, onOpen }: { project: Project; onOpen: (project: Project) => void }) {
+function launchHedgehogSignIn() {
+  window.location.assign(HEDGEHOG_SIGN_IN_URL);
+}
+
+function ProjectMiniCard({ project, onOpen, onStart }: { project: Project; onOpen: (project: Project) => void; onStart: (project: Project) => void }) {
   return (
     <article className="rounded-lg border border-[#e8e8e8] p-3.5">
       <div className="flex items-start justify-between">
@@ -236,7 +244,7 @@ function ProjectMiniCard({ project, onOpen }: { project: Project; onOpen: (proje
       <p className="mt-3 text-[12px] leading-[1.4] text-[#222]">{project.description}</p>
       {project.progress && <div className="mt-3 flex items-center gap-2"><div className="h-1 flex-1 rounded bg-[#111]" /><span className="text-[10px] text-[#777]">{project.progress}</span></div>}
       <div className="mt-3 flex gap-2">
-        <button onClick={() => onOpen(project)} className="solid-btn" data-testid={`button-start-${project.id}`}>{project.status === 'In Progress' ? 'Continue' : 'Start task'}</button>
+        <button onClick={() => onStart(project)} className="solid-btn" data-testid={`button-start-${project.id}`}>{project.status === 'In Progress' ? 'Continue' : 'Start task'}</button>
         <button onClick={() => onOpen(project)} className="tiny-btn" data-testid={`button-view-${project.id}`}>View project</button>
       </div>
     </article>
@@ -254,7 +262,7 @@ function Dashboard() {
   const [termsOpen, setTermsOpen] = useState(false);
   const [started] = useState(() => storedIds('handshake-started-projects'));
   const faqs = ['What is it like working as an AI trainer?', 'How and when do I get paid?', 'What skills do I need to work on AI projects?', 'How many hours per week can I work?'];
-  const currentProjects = ['hedgehog', 'gaffer', 'seal'].map((id) => projects.find((project) => project.id === id)).filter(Boolean).map((project) => projectWithStoredStatus(project as Project, started));
+  const currentProjects = projects.map((project) => projectWithStoredStatus(project, started));
   const pastProjects = projects.filter((project) => project.status === 'Completed');
   const toggleChecklist = (index: number) => {
     const next = checklist.map((value, current) => current === index ? !value : value);
@@ -269,7 +277,7 @@ function Dashboard() {
           <div className="workspace-content">
             <section className="mb-7">
               <div className="mb-3 flex items-center justify-between"><h1 className="text-[14px] font-semibold">Your projects</h1><div className="flex overflow-hidden rounded-md border border-[#ddd]"><button onClick={() => setCurrentTab('Current')} className={`px-3 py-1 text-[11px] ${currentTab === 'Current' ? 'bg-black font-semibold text-white' : ''}`} data-testid="button-projects-current">Current</button><button onClick={() => setCurrentTab('Past')} className={`px-3 py-1 text-[11px] ${currentTab === 'Past' ? 'bg-black font-semibold text-white' : ''}`} data-testid="button-projects-past">Past</button></div></div>
-              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">{(currentTab === 'Current' ? currentProjects : pastProjects).map((project) => <ProjectMiniCard key={project.id} project={project} onOpen={openProject} />)}</div>
+              {currentTab === 'Current' ? <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">{currentProjects.map((project) => <ProjectMiniCard key={project.id} project={project} onOpen={openProject} onStart={launchHedgehogSignIn} />)}</div> : <div className="rounded-lg border border-dashed border-[#ddd] py-12 text-center text-xs text-[#777]">No past projects yet.</div>}
             </section>
             <section className="mb-7"><h2 className="mb-3 text-[14px] font-semibold">Opportunities that might interest you</h2><div className="rounded-lg border border-dashed border-[#e0e0e0] py-8 text-center text-xs text-[#888]">No opportunities right now — check back soon.</div></section>
             <section><h2 className="mb-3 text-[14px] font-semibold">Frequently asked questions</h2><div className="overflow-hidden rounded-lg border border-[#e4e4e4]">{faqs.map((faq, index) => <div key={faq} className="border-b border-[#e8e8e8] last:border-0"><button onClick={() => setOpenFaq(openFaq === index ? null : index)} className="flex w-full items-center justify-between px-3.5 py-3 text-left text-[11px] hover:bg-[#fafafa]" data-testid={`button-faq-${index}`}><span>{faq}</span><ChevronDown size={13} className={`transition-transform ${openFaq === index ? 'rotate-180' : ''}`} /></button>{openFaq === index && <p className="px-3.5 pb-3 text-[11px] leading-relaxed text-[#777]">{['AI trainers review, compare, and improve model outputs with thoughtful feedback.', 'Payments are processed after approved work is completed.', 'Clear writing, careful attention, and subject expertise are useful.', 'Choose the hours that work for your schedule.'][index]}</p>}</div>)}</div></section>
@@ -286,12 +294,12 @@ function Dashboard() {
   );
 }
 
-function ProjectCard({ project, onOpen }: { project: Project; onOpen: (project: Project) => void }) {
-  return <article className="project-card"><div className="flex items-start justify-between gap-2"><div><h2 className="text-[12px] font-semibold">{project.name}</h2><p className="text-[10px] text-[#999]">{project.category}</p></div><span className={`status ${project.status === 'Available' ? 'available' : project.status === 'In Progress' ? 'progress' : 'completed'}`}>{project.status}</span></div><p className="mt-3 line-clamp-2 text-[11px] leading-[1.4] text-[#555]">{project.description}</p><div className="mt-3 flex flex-wrap gap-1">{project.tags.map((tag) => <span className="tag" key={tag}>{tag}</span>)}</div>{project.progress && <div className="mt-3 flex items-center gap-2"><span className="text-[10px] font-medium">Progress</span><div className="h-1 flex-1 rounded bg-[#111]" /><span className="text-[10px] text-[#777]">{project.progress}</span></div>}<div className="mt-auto flex items-center gap-2 pt-3 text-[10px] text-[#777]"><span>{project.pay}</span><span className="flex items-center gap-0.5"><MapPin size={10} /> Remote</span><span>{project.age}</span></div><div className="mt-3 flex gap-2 border-t border-[#eee] pt-3">{project.status !== 'Completed' && <button onClick={() => onOpen(project)} className="solid-btn px-3 py-1.5 text-[11px]" data-testid={`button-card-action-${project.id}`}>{project.status === 'In Progress' ? 'Continue' : 'Start task'}</button>}<button onClick={() => onOpen(project)} className="tiny-btn px-3 py-1.5 text-[11px]" data-testid={`button-card-details-${project.id}`}>View details</button></div></article>;
+function ProjectCard({ project, onOpen, onStart }: { project: Project; onOpen: (project: Project) => void; onStart: (project: Project) => void }) {
+  return <article className="project-card"><div className="flex items-start justify-between gap-2"><div><h2 className="text-[12px] font-semibold">{project.name}</h2><p className="text-[10px] text-[#999]">{project.category}</p></div><span className={`status ${project.status === 'Available' ? 'available' : project.status === 'In Progress' ? 'progress' : 'completed'}`}>{project.status}</span></div><p className="mt-3 line-clamp-2 text-[11px] leading-[1.4] text-[#555]">{project.description}</p><div className="mt-3 flex flex-wrap gap-1">{project.tags.map((tag) => <span className="tag" key={tag}>{tag}</span>)}</div>{project.progress && <div className="mt-3 flex items-center gap-2"><span className="text-[10px] font-medium">Progress</span><div className="h-1 flex-1 rounded bg-[#111]" /><span className="text-[10px] text-[#777]">{project.progress}</span></div>}<div className="mt-auto flex items-center gap-2 pt-3 text-[10px] text-[#777]"><span>{project.pay}</span><span className="flex items-center gap-0.5"><MapPin size={10} /> Remote</span><span>{project.age}</span></div><div className="mt-3 flex gap-2 border-t border-[#eee] pt-3">{project.status !== 'Completed' && <button onClick={() => onStart(project)} className="solid-btn px-3 py-1.5 text-[11px]" data-testid={`button-card-action-${project.id}`}>{project.status === 'In Progress' ? 'Continue' : 'Start task'}</button>}<button onClick={() => onOpen(project)} className="tiny-btn px-3 py-1.5 text-[11px]" data-testid={`button-card-details-${project.id}`}>View details</button></div></article>;
 }
 
 function ProjectDialog({ project, onClose, onStart }: { project: Project; onClose: () => void; onStart: () => void }) {
-  return <Modal title={project.name} onClose={onClose}><p className="mt-1 text-[10px] text-[#777]">{project.category}</p><p className="mt-5 text-[12px] leading-relaxed text-[#555]">{project.description}</p><div className="mt-4 flex flex-wrap gap-1.5">{project.tags.map((tag) => <span className="tag" key={tag}>{tag}</span>)}</div><div className="mt-5 grid grid-cols-2 gap-3 border-y border-[#eee] py-4 text-xs"><div><p className="text-[#999]">Compensation</p><p className="mt-1 font-semibold">{project.pay}</p></div><div><p className="text-[#999]">Location</p><p className="mt-1 font-semibold">Remote</p></div></div><div className="mt-5 flex justify-end gap-2"><button onClick={onClose} className="tiny-btn">Close</button>{project.status !== 'Completed' && <button onClick={onStart} className="solid-btn">{project.status === 'In Progress' ? 'Continue' : 'Start task'}</button>}</div></Modal>;
+  return <Modal title={project.name} onClose={onClose}><p className="mt-1 text-[10px] text-[#777]">{project.category}</p><p className="mt-5 text-[12px] leading-relaxed text-[#555]">{project.description}</p><div className="mt-4 flex flex-wrap gap-1.5">{project.tags.map((tag) => <span className="tag" key={tag}>{tag}</span>)}</div><div className="mt-5 grid grid-cols-2 gap-3 border-y border-[#eee] py-4 text-xs"><div><p className="text-[#999]">Compensation</p><p className="mt-1 font-semibold">{project.pay}</p></div><div><p className="text-[#999]">Location</p><p className="mt-1 font-semibold">Remote</p></div></div>{project.id === 'hedgehog' && <div className="mt-4 rounded-md bg-[#f7f7f7] p-3 text-[11px] leading-relaxed text-[#666]">Create your Multimango account first. After signup, use the task workspace link below to continue.<br /><a href={HEDGEHOG_TASK_URL} target="_blank" rel="noreferrer" className="mt-1 inline-block font-semibold text-[#111] underline underline-offset-2">Open Hedgehog task workspace</a></div>}<div className="mt-5 flex justify-end gap-2"><button onClick={onClose} className="tiny-btn">Close</button>{project.status !== 'Completed' && <button onClick={onStart} className="solid-btn">{project.status === 'In Progress' ? 'Continue' : 'Start task'}</button>}</div></Modal>;
 }
 
 function ProjectBrowser() {
@@ -312,8 +320,47 @@ function ProjectBrowser() {
     return remoteOnly ? list : list;
   }, [search, sort, status, remoteOnly, started]);
   const openProject = (project: Project) => { setSelected(project); window.history.pushState({}, '', `/projects?open=${project.id}`); };
-  const startProject = (project: Project) => { const next = started.includes(project.id) ? started : [...started, project.id]; setStarted(next); window.localStorage.setItem('handshake-started-projects', JSON.stringify(next)); setLocation(`/tasks/${project.id}`); };
-  return <Workspace><main className="workspace-content flex-1"><div className="mb-4 flex items-start justify-between"><div><h1 className="text-[17px] font-bold tracking-[-.03em]">Projects</h1><p className="mt-0.5 text-[11px] text-[#888]">Browse and manage your AI work projects</p></div><div className="hidden items-center gap-2 md:flex"><span className="rounded-full bg-[#f5f5f5] px-2 py-1 text-[10px] text-[#777]">4 available</span><span className="rounded-full bg-[#f1f5ff] px-2 py-1 text-[10px] text-[#416db9]">2 in progress</span><span className="rounded-full bg-[#f5f5f5] px-2 py-1 text-[10px] text-[#777]">2 completed</span></div></div><div className="mb-4 flex flex-wrap gap-2"><div className="relative min-w-[220px] flex-1"><Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#999]" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search projects, skills, categories..." className="h-7 w-full rounded-lg border border-[#e2e2e2] pl-8 pr-3 text-[11px] outline-none focus:border-black" data-testid="input-search-projects" /></div><button onClick={() => setFiltersOpen(!filtersOpen)} className={`flex h-7 items-center gap-2 rounded-lg border px-3 text-[11px] ${filtersOpen ? 'border-black bg-[#fafafa]' : 'border-[#e2e2e2]'}`} data-testid="button-filters"><ListFilter size={12} /> Filters</button><select value={sort} onChange={(event) => setSort(event.target.value)} className="h-7 rounded-lg border border-[#e2e2e2] bg-white px-2 text-[11px]" data-testid="select-sort"><option>Newest</option><option>Highest Pay</option><option>Lowest Pay</option></select></div>{filtersOpen && <div className="mb-4 flex items-center gap-3 rounded-lg border border-[#e5e5e5] bg-[#fafafa] p-3 text-[11px]"><label className="flex items-center gap-2"><input type="checkbox" checked={remoteOnly} onChange={(event) => setRemoteOnly(event.target.checked)} data-testid="checkbox-remote" /> Remote projects</label><span className="text-[#888]">All projects are currently remote.</span></div>}<div className="mb-5 flex items-center gap-0 border-b border-[#e5e5e5]">{(['All', 'Available', 'In Progress', 'Completed'] as const).map((tab) => <button key={tab} onClick={() => setStatus(tab)} className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-[11px] ${status === tab ? 'border-black font-semibold text-black' : 'border-transparent text-[#777] hover:text-black'}`} data-testid={`button-status-${tab.toLowerCase().replace(' ', '-')}`}>{tab}<span className="text-[10px]">{tab === 'All' ? visible.length : projects.map((project) => projectWithStoredStatus(project, started)).filter((project) => project.status === tab).length}</span></button>)}</div><div className="mb-3 flex items-center justify-between"><p className="text-[11px] text-[#777]">{visible.length} projects found</p><div className="flex gap-1 text-[10px] text-[#aaa]"><button onClick={() => window.history.back()} aria-label="Back" data-testid="button-history-back"><ArrowLeft size={13} /></button><button onClick={() => window.history.forward()} aria-label="Forward" data-testid="button-history-forward"><ArrowRight size={13} /></button></div></div>{visible.length ? <div className="projects-grid grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">{visible.map((project) => <ProjectCard key={project.id} project={project} onOpen={openProject} />)}</div> : <div className="rounded-lg border border-dashed border-[#ddd] py-20 text-center text-xs text-[#888]">No projects found. Try a different search.</div>}{selected && <ProjectDialog project={selected} onClose={() => { setSelected(null); window.history.pushState({}, '', '/projects'); }} onStart={() => startProject(selected)} />}</main></Workspace>;
+  const startProject = (project: Project) => { const next = started.includes(project.id) ? started : [...started, project.id]; setStarted(next); window.localStorage.setItem('handshake-started-projects', JSON.stringify(next)); launchHedgehogSignIn(); };
+  return <Workspace><main className="workspace-content flex-1"><div className="mb-4 flex items-start justify-between"><div><h1 className="text-[17px] font-bold tracking-[-.03em]">Projects</h1><p className="mt-0.5 text-[11px] text-[#888]">Browse and manage your AI work projects</p></div><div className="hidden items-center gap-2 md:flex"><span className="rounded-full bg-[#edfad6] px-2 py-1 text-[10px] text-[#4c8010]">1 available</span></div></div><div className="mb-4 flex flex-wrap gap-2"><div className="relative min-w-[220px] flex-1"><Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#999]" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search projects, skills, categories..." className="h-7 w-full rounded-lg border border-[#e2e2e2] pl-8 pr-3 text-[11px] outline-none focus:border-black" data-testid="input-search-projects" /></div><button onClick={() => setFiltersOpen(!filtersOpen)} className={`flex h-7 items-center gap-2 rounded-lg border px-3 text-[11px] ${filtersOpen ? 'border-black bg-[#fafafa]' : 'border-[#e2e2e2]'}`} data-testid="button-filters"><ListFilter size={12} /> Filters</button><select value={sort} onChange={(event) => setSort(event.target.value)} className="h-7 rounded-lg border border-[#e2e2e2] bg-white px-2 text-[11px]"><option>Newest</option><option>Highest Pay</option><option>Lowest Pay</option></select></div>{filtersOpen && <div className="mb-4 flex items-center gap-3 rounded-lg border border-[#e5e5e5] bg-[#fafafa] p-3 text-[11px]"><label className="flex items-center gap-2"><input type="checkbox" checked={remoteOnly} onChange={(event) => setRemoteOnly(event.target.checked)} data-testid="checkbox-remote" /> Remote projects</label><span className="text-[#888]">The Hedgehog project is remote.</span></div>}<div className="mb-5 flex items-center gap-0 border-b border-[#e5e5e5]">{(['All', 'Available', 'In Progress', 'Completed'] as const).map((tab) => <button key={tab} onClick={() => setStatus(tab)} className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-[11px] ${status === tab ? 'border-black font-semibold text-black' : 'border-transparent text-[#777] hover:text-black'}`} data-testid={`button-status-${tab.toLowerCase().replace(' ', '-')}`}>{tab}<span className="text-[10px]">{projects.map((project) => projectWithStoredStatus(project, started)).filter((project) => tab === 'All' || project.status === tab).length}</span></button>)}</div><div className="mb-3 flex items-center justify-between"><p className="text-[11px] text-[#777]">{visible.length} projects found</p><div className="flex gap-1 text-[10px] text-[#aaa]"><button onClick={() => window.history.back()} aria-label="Back" data-testid="button-history-back"><ArrowLeft size={13} /></button><button onClick={() => window.history.forward()} aria-label="Forward" data-testid="button-history-forward"><ArrowRight size={13} /></button></div></div>{visible.length ? <div className="projects-grid grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">{visible.map((project) => <ProjectCard key={project.id} project={project} onOpen={openProject} onStart={startProject} />)}</div> : <div className="rounded-lg border border-dashed border-[#ddd] py-20 text-center text-xs text-[#888]">No projects found. Try a different search.</div>}{selected && <ProjectDialog project={selected} onClose={() => { setSelected(null); window.history.pushState({}, '', '/projects'); }} onStart={() => startProject(selected)} />}</main></Workspace>;
+}
+
+function PaymentsPage() {
+  const [, setLocation] = useLocation();
+  const [projectFilter, setProjectFilter] = useState('All projects');
+  const [period, setPeriod] = useState('Time period');
+  const [modal, setModal] = useState<'payout' | 'w9' | null>(null);
+  const periods = ['Dec 08 – 14', 'Dec 15 – 21', 'Dec 22 – 28', 'Dec 29 – Jan 4', 'Jan 05 – 11', 'Jan 12 – 18'];
+  return (
+    <Workspace>
+      <main className="workspace-content flex-1">
+        <div className="payments-page-grid">
+          <section>
+            <div className="mb-4 flex items-center gap-2">
+              <select value={projectFilter} onChange={(event) => setProjectFilter(event.target.value)} className="h-7 rounded-md border border-[#dedede] bg-white px-2 text-[11px]"><option>All projects</option><option>Project Hedgehog</option></select>
+              <select value={period} onChange={(event) => setPeriod(event.target.value)} className="h-7 rounded-md border border-[#dedede] bg-white px-2 text-[11px]"><option>Time period</option><option>Last 30 days</option><option>Last 90 days</option></select>
+              <button onClick={() => setModal('payout')} className="ml-auto rounded px-2 py-1 text-[#888] hover:bg-[#f4f4f4]" aria-label="Payment options">•••</button>
+            </div>
+            <article className="payment-card">
+              <div className="flex items-start justify-between"><div><h1 className="text-[14px] font-semibold">Earnings</h1><p className="mt-1 text-[11px] text-[#888]">{projectFilter} · {period}</p></div><p className="text-[11px] text-[#777]"><strong className="text-[#111]">$0.00</strong> total earnings</p></div>
+              <div className="payment-chart mt-5"><div className="payment-y-axis"><span>$0</span><span>$20</span><span>$40</span><span>$60</span></div><div className="payment-bars">{periods.map((label) => <div key={label} className="payment-bar-group"><div className="payment-bar" /><span>{label}</span></div>)}</div></div>
+            </article>
+            <div className="payment-payout-list mt-3">
+              {['Jan 8 – Jan 16, 2026', 'Dec 30 – Jan 4, 2026', 'Dec 22 – 28, 2025', 'Dec 15 – 21, 2025'].map((label) => <button key={label} onClick={() => setModal('payout')} className="payment-row"><span className="flex items-center gap-2"><ChevronDown size={13} />{label}</span><span className="flex items-center gap-6"><span className="text-[10px] text-[#63a36f]">Paid on Jan 16, 2026</span><strong>$0.00</strong></span></button>)}
+            </div>
+          </section>
+          <aside className="payments-panel">
+            <div className="grid grid-cols-2 gap-4 border-b border-[#eee] pb-5"><div><p className="text-[10px] text-[#777]">Earnings awaiting payout <CircleHelp size={9} className="inline" /></p><p className="metric mt-1">$0.00</p></div><div><p className="text-[10px] text-[#777]">Total paid <CircleHelp size={9} className="inline" /></p><p className="metric mt-1">$0.00</p></div></div>
+            <button onClick={() => setModal('payout')} className="payment-side-row"><span><strong>Payout method</strong><small>Not set up</small></span><ChevronDown size={15} className="rotate-[-90deg]" /></button>
+            <button onClick={() => setLocation('/support')} className="payment-side-row"><span><strong>Payment help center</strong><small>Find answers about payouts</small></span><ChevronDown size={15} className="rotate-[-90deg]" /></button>
+            <button onClick={() => setModal('w9')} className="payment-side-row"><span><strong>W-9 form</strong><small>Download or update your tax form</small></span><ArrowRight size={15} /></button>
+            <p className="mt-4 text-[10px] leading-relaxed text-[#777]">Payments are processed on Wednesdays for the prior work. Your total may take a few days to post to the funds.</p>
+          </aside>
+        </div>
+      </main>
+      {modal === 'payout' && <Modal title="Payout method" onClose={() => setModal(null)}><p className="mt-4 text-sm leading-relaxed text-[#555]">Your balance is currently $0.00. Add a payout method to receive future approved earnings.</p><button onClick={() => setModal(null)} className="solid-btn mt-5 w-full">Add payout method</button></Modal>}
+      {modal === 'w9' && <Modal title="W-9 form" onClose={() => setModal(null)}><p className="mt-4 text-sm leading-relaxed text-[#555]">There is no W-9 form to download yet. Complete your contributor profile when you are ready to receive payments.</p><button onClick={() => { setModal(null); setLocation('/account'); }} className="solid-btn mt-5 w-full">Open account settings</button></Modal>}
+    </Workspace>
+  );
 }
 
 type ContentItem = { title: string; detail: string; meta: string; action: string };
@@ -362,7 +409,7 @@ function TaskPage() {
 }
 
 function Router() {
-  return <ErrorBoundary resetKey={window.location.pathname}><Switch><Route path="/" component={Assessment} /><Route path="/ai-work-dashboard" component={Dashboard} /><Route path="/projects" component={ProjectBrowser} /><Route path="/tasks/:id" component={TaskPage} />{Object.keys(pageContent).map((pageKey) => <Route key={pageKey} path={`/${pageKey}`} component={() => <ContentPage pageKey={pageKey} />} />)}<Route component={() => <ContentPage pageKey="explore" />} /></Switch></ErrorBoundary>;
+  return <ErrorBoundary resetKey={window.location.pathname}><Switch><Route path="/" component={Assessment} /><Route path="/ai-work-dashboard" component={Dashboard} /><Route path="/projects" component={ProjectBrowser} /><Route path="/payments" component={PaymentsPage} /><Route path="/tasks/:id" component={TaskPage} />{Object.keys(pageContent).filter((pageKey) => pageKey !== 'payments').map((pageKey) => <Route key={pageKey} path={`/${pageKey}`} component={() => <ContentPage pageKey={pageKey} />} />)}<Route component={() => <ContentPage pageKey="explore" />} /></Switch></ErrorBoundary>;
 }
 
 function App() {
